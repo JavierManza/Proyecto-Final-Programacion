@@ -235,7 +235,7 @@ public class Principal extends JFrame {
      * Devuelve true si el usuario actual tiene rol de ADMIN (Bibliotecario).
      */
     private boolean esAdmin() {
-        return "ADMIN".equals(usuarioActual.getRol());
+        return "BIBLIOTECARIO".equals(usuarioActual.getRol());
     }
 
     /**

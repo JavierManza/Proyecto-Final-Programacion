@@ -11,7 +11,7 @@ CREATE TABLE usuarios (
     nombre VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
     dni VARCHAR(20) NOT NULL UNIQUE,
-    rol ENUM('ADMIN', 'SOCIO') NOT NULL DEFAULT 'SOCIO'
+    rol ENUM('BIBLIOTECARIO', 'SOCIO') NOT NULL DEFAULT 'SOCIO'
 );
 
 -- 2. Tabla hija: Socios (Joined Table Inheritance)
@@ -69,7 +69,7 @@ CREATE TABLE reservas (
 
 -- Insertar datos de prueba
 INSERT INTO usuarios (username, password, email, nombre, apellidos, dni, rol) VALUES 
-('admin', 'admin123', 'admin@biblioteca.es', 'Admin', 'Sistema', '12345678A', 'ADMIN'),
+('bibliotecario1', 'bibliotecario1', 'biblio@correo.es', 'Pedro', 'Picapiedra', '12345678A', 'BIBLIOTECARIO'),
 ('socio1', 'socio123', 'juan@correo.com', 'Juan', 'Pérez', '87654321B', 'SOCIO');
 
 INSERT INTO bibliotecarios (usuario_id, num_empleado, turno) VALUES (1, 'BIB-001', 'MAÑANA');

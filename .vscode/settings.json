@@ -1,0 +1,7 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "mysql-connector-j-9.7.0.jar",
+        "flatlaf-3.4.1.jar"
+    ]
+}
