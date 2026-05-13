@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class ConexionDB {
-    private static final String URL = "jdbc:mysql://localhost:3307/biblioteca_municipal";
+    private static final String URL = "jdbc:mysql://localhost:3306/biblioteca_municipal";
     private static final String USER = "root";
     private static final String PASSWORD = "root"; // Coincide con MYSQL_ROOT_PASSWORD en docker-compose
 
