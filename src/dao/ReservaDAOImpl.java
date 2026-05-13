@@ -64,6 +64,20 @@ public class ReservaDAOImpl implements ReservaDAO {
     }
 
     @Override
+    public boolean actualizarEstado(int id, String nuevoEstado) {
+        String sql = "UPDATE reservas SET estado = ? WHERE id = ?";
+        try (Connection conn = ConexionDB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nuevoEstado);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
     public boolean eliminar(int id) {
         String sql = "DELETE FROM reservas WHERE id = ?";
         try (Connection conn = ConexionDB.getConnection();

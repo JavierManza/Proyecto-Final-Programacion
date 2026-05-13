@@ -208,7 +208,7 @@ public class Principal extends JFrame {
 
         // Determinar qué módulos mostrar según el rol
         String[] modulosAdmin = { "Libros", "Usuarios", "Préstamos", "Historial", "Reservas" };
-        String[] modulosSocio = { "Mis Préstamos", "Mis Reservas" };
+        String[] modulosSocio = { "Libros", "Mis Préstamos", "Mis Reservas" };
         String[] modulos = esAdmin() ? modulosAdmin : modulosSocio;
 
         // Añadir una etiqueta de rol en la parte superior del sidebar
@@ -277,56 +277,102 @@ public class Principal extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 0;
         gbc.gridy = 0;
+        if (esAdmin()) {
+            pnlOperations.add(new JLabel("GESTIÓN DE LIBROS"), gbc);
+            gbc.gridy++;
+            pnlOperations.add(new JLabel("ISBN:"), gbc);
+            gbc.gridy++;
+            txtLibroIsbn = new JTextField();
+            pnlOperations.add(txtLibroIsbn, gbc);
 
-        pnlOperations.add(new JLabel("ISBN:"), gbc);
-        gbc.gridy++;
-        txtLibroIsbn = new JTextField();
-        pnlOperations.add(txtLibroIsbn, gbc);
+            JButton btnFetch = new JButton("Buscar en API");
+            gbc.gridy++;
+            pnlOperations.add(btnFetch, gbc);
 
-        JButton btnFetch = new JButton("Buscar en API");
-        gbc.gridy++;
-        pnlOperations.add(btnFetch, gbc);
+            gbc.gridy++;
+            pnlOperations.add(new JLabel("Título:"), gbc);
+            gbc.gridy++;
+            txtLibroTitulo = new JTextField();
+            pnlOperations.add(txtLibroTitulo, gbc);
 
-        gbc.gridy++;
-        pnlOperations.add(new JLabel("Título:"), gbc);
-        gbc.gridy++;
-        txtLibroTitulo = new JTextField();
-        pnlOperations.add(txtLibroTitulo, gbc);
+            gbc.gridy++;
+            pnlOperations.add(new JLabel("Autor:"), gbc);
+            gbc.gridy++;
+            txtLibroAutor = new JTextField();
+            pnlOperations.add(txtLibroAutor, gbc);
 
-        gbc.gridy++;
-        pnlOperations.add(new JLabel("Autor:"), gbc);
-        gbc.gridy++;
-        txtLibroAutor = new JTextField();
-        pnlOperations.add(txtLibroAutor, gbc);
+            gbc.gridy++;
+            pnlOperations.add(new JLabel("Stock:"), gbc);
+            gbc.gridy++;
+            txtLibroStock = new JTextField();
+            pnlOperations.add(txtLibroStock, gbc);
 
-        gbc.gridy++;
-        pnlOperations.add(new JLabel("Stock:"), gbc);
-        gbc.gridy++;
-        txtLibroStock = new JTextField();
-        pnlOperations.add(txtLibroStock, gbc);
+            JButton btnGuardar = new JButton("Guardar Libro");
+            if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
+                btnGuardar.setBackground(new Color(63, 81, 181));
+                btnGuardar.setForeground(Color.WHITE);
+            }
+            gbc.gridy++;
+            gbc.insets = new Insets(20, 5, 5, 5);
+            pnlOperations.add(btnGuardar, gbc);
 
-        JButton btnGuardar = new JButton("Guardar Libro");
-        if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
-            btnGuardar.setBackground(new Color(63, 81, 181));
-            btnGuardar.setForeground(Color.WHITE);
+            JButton btnEliminar = new JButton("Eliminar Seleccionado");
+            gbc.gridy++;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            pnlOperations.add(btnEliminar, gbc);
+
+            // Acción del botón "Buscar en API": llama a Open Library con el ISBN
+            btnFetch.addActionListener(e -> {
+                OpenLibraryService.BookInfo info = OpenLibraryService.fetchByIsbn(txtLibroIsbn.getText());
+                if (info != null) {
+                    txtLibroTitulo.setText(info.title);
+                    JOptionPane.showMessageDialog(this, "Datos obtenidos de Open Library");
+                }
+            });
+
+            // Acción del botón "Guardar Libro"
+            btnGuardar.addActionListener(e -> {
+                try {
+                    Libro l = new Libro();
+                    l.setIsbn(txtLibroIsbn.getText());
+                    l.setTitulo(txtLibroTitulo.getText());
+                    l.setAutor(txtLibroAutor.getText());
+                    l.setEjemplaresTotales(Integer.parseInt(txtLibroStock.getText()));
+                    l.setEjemplaresDisponibles(l.getEjemplaresTotales());
+                    if (libroDAO.insertar(l)) {
+                        JOptionPane.showMessageDialog(this, "Libro guardado");
+                        configModuloLibros();
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error: Verifique los datos numéricos.");
+                }
+            });
+
+            // Acción del botón "Eliminar"
+            btnEliminar.addActionListener(e -> {
+                int row = table.getSelectedRow();
+                if (row != -1) {
+                    int id = (int) tableModel.getValueAt(row, 0);
+                    if (libroDAO.eliminar(id)) {
+                        JOptionPane.showMessageDialog(this, "Libro eliminado");
+                        configModuloLibros();
+                    }
+                }
+            });
+        } else {
+            pnlOperations.add(new JLabel("CATÁLOGO DE LIBROS"), gbc);
+            gbc.gridy++;
+            pnlOperations.add(new JLabel("Selecciona un libro para reservarlo."), gbc);
         }
-        gbc.gridy++;
-        gbc.insets = new Insets(20, 5, 5, 5);
-        pnlOperations.add(btnGuardar, gbc);
 
-        JButton btnEliminar = new JButton("Eliminar Seleccionado");
-        gbc.gridy++;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        pnlOperations.add(btnEliminar, gbc);
-
-        
-        // BOTÓN RESERVAR (Solo útil si no hay stock)
+        // BOTÓN RESERVAR (Disponible para todos, pero especialmente útil para socios)
         JButton btnReservar = new JButton("⭐ Reservar Libro");
         if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
             btnReservar.setBackground(new Color(255, 193, 7));
             btnReservar.setForeground(Color.BLACK);
         }
         gbc.gridy++;
+        gbc.insets = new Insets(20, 5, 5, 5);
         pnlOperations.add(btnReservar, gbc);
 
         btnReservar.addActionListener(e -> {
@@ -341,45 +387,6 @@ public class Principal extends JFrame {
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "Seleccione un libro de la tabla.");
-            }
-        });
-
-        // Acción del botón "Buscar en API": llama a Open Library con el ISBN
-        btnFetch.addActionListener(e -> {
-            OpenLibraryService.BookInfo info = OpenLibraryService.fetchByIsbn(txtLibroIsbn.getText());
-            if (info != null) {
-                txtLibroTitulo.setText(info.title); // Rellena el campo título automáticamente
-                JOptionPane.showMessageDialog(this, "Datos obtenidos de Open Library");
-            }
-        });
-
-        // Acción del botón "Guardar Libro": crea el objeto Libro y lo inserta en la DB
-        btnGuardar.addActionListener(e -> {
-            try {
-                Libro l = new Libro();
-                l.setIsbn(txtLibroIsbn.getText());
-                l.setTitulo(txtLibroTitulo.getText());
-                l.setAutor(txtLibroAutor.getText());
-                l.setEjemplaresTotales(Integer.parseInt(txtLibroStock.getText())); // Convierte String a número
-                l.setEjemplaresDisponibles(l.getEjemplaresTotales()); // Disponibles = Total al crear
-                if (libroDAO.insertar(l)) {
-                    JOptionPane.showMessageDialog(this, "Libro guardado");
-                    configModuloLibros(); // Recarga la tabla para mostrar el nuevo libro
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: Verifique los datos numéricos.");
-            }
-        });
-
-        // Acción del botón "Eliminar": obtiene el ID de la fila seleccionada y lo borra
-        btnEliminar.addActionListener(e -> {
-            int row = table.getSelectedRow(); // Fila que el usuario ha marcado en la tabla
-            if (row != -1) {
-                int id = (int) tableModel.getValueAt(row, 0); // El ID siempre está en la columna 0
-                if (libroDAO.eliminar(id)) {
-                    JOptionPane.showMessageDialog(this, "Libro eliminado");
-                    configModuloLibros(); // Recarga la tabla
-                }
             }
         });
     }
@@ -416,7 +423,7 @@ public class Principal extends JFrame {
         gbc.gridy = 0;
 
         pnlOperations.add(new JLabel("NUEVO PRÉSTAMO"), gbc);
-        
+
         gbc.gridy++;
         pnlOperations.add(new JLabel("ID Socio:"), gbc);
         gbc.gridy++;
@@ -498,8 +505,37 @@ public class Principal extends JFrame {
             r.getId(), r.getNombreSocio(), r.getTituloLibro(), r.getFechaReserva(), r.getEstado() 
         }));
         
-        pnlOperations.setLayout(new GridLayout(5, 1, 10, 10));
+        pnlOperations.setLayout(new GridLayout(6, 1, 10, 10));
         pnlOperations.add(new JLabel("GESTIÓN DE RESERVAS", JLabel.CENTER));
+
+        JButton btnConfirmar = new JButton("✅ Entregar Libro (Préstamo)");
+        if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
+            btnConfirmar.setBackground(new Color(63, 81, 181));
+            btnConfirmar.setForeground(Color.WHITE);
+        }
+        btnConfirmar.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                int resId = (int) tableModel.getValueAt(row, 0);
+                reservaDAO.listarTodas().stream()
+                    .filter(res -> res.getId() == resId)
+                    .findFirst().ifPresent(res -> {
+                        Prestamo p = new Prestamo();
+                        p.setSocioId(res.getSocioId());
+                        p.setLibroId(res.getLibroId());
+                        p.setFechaDevolucionPrevista(LocalDate.now().plusDays(15));
+                        if (prestamoDAO.registrarPrestamo(p)) {
+                            reservaDAO.actualizarEstado(resId, "COMPLETADA");
+                            JOptionPane.showMessageDialog(this, "Libro entregado. La reserva ahora está COMPLETADA.");
+                            configModuloReservas();
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Error: Verifique el stock del libro.");
+                        }
+                    });
+            }
+        });
+        pnlOperations.add(btnConfirmar);
+
         JButton btnBorrar = new JButton("Eliminar Reserva");
         btnBorrar.addActionListener(e -> {
             int row = table.getSelectedRow();
@@ -519,10 +555,10 @@ public class Principal extends JFrame {
     private void configModuloMisReservas() {
         String[] cols = { "ID", "Libro", "Fecha", "Estado" };
         tableModel.setDataVector(null, cols);
-        reservaDAO.listarPorSocio(usuarioActual.getId()).forEach(r -> tableModel.addRow(new Object[] { 
-            r.getId(), r.getTituloLibro(), r.getFechaReserva(), r.getEstado() 
+        reservaDAO.listarPorSocio(usuarioActual.getId()).forEach(r -> tableModel.addRow(new Object[] {
+                r.getId(), r.getTituloLibro(), r.getFechaReserva(), r.getEstado()
         }));
-        
+
         pnlOperations.setLayout(new GridLayout(5, 1, 10, 10));
         pnlOperations.add(new JLabel("MIS RESERVAS", JLabel.CENTER));
     }
