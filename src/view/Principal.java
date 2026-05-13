@@ -26,6 +26,7 @@ public class Principal extends JFrame {
     private LibroDAO libroDAO = new LibroDAOImpl();
     private UsuarioDAO usuarioDAO = new UsuarioDAOImpl();
     private PrestamoDAO prestamoDAO = new PrestamoDAOImpl();
+    private ReservaDAO reservaDAO = new ReservaDAOImpl();
 
     // Campos de texto para el formulario de Libros (Panel Adaptativo)
     private JTextField txtLibroIsbn, txtLibroTitulo, txtLibroAutor, txtLibroStock;
@@ -211,7 +212,7 @@ public class Principal extends JFrame {
         String[] modulos = esAdmin() ? modulosAdmin : modulosSocio;
 
         // Añadir una etiqueta de rol en la parte superior del sidebar
-        JLabel lblRol = new JLabel(esAdmin() ? " 👤 ADMIN" : " 👤 SOCIO", JLabel.LEFT);
+        JLabel lblRol = new JLabel(esAdmin() ? "BIBLIOTECARIO" : "SOCIO", JLabel.LEFT);
         lblRol.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblRol.setForeground(esAdmin() ? new Color(255, 193, 7) : new Color(100, 220, 255)); // Amarillo para admin,
                                                                                              // azul para socio
@@ -252,7 +253,7 @@ public class Principal extends JFrame {
             case "Reservas" -> configModuloReservas();
             // Módulos exclusivos del Socio
             case "Mis Préstamos" -> configModuloMisPrestamos();
-            case "Mis Reservas" -> configModuloReservas();
+            case "Mis Reservas" -> configModuloMisReservas();
         }
         pnlOperations.revalidate();
         pnlOperations.repaint();
@@ -318,6 +319,31 @@ public class Principal extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         pnlOperations.add(btnEliminar, gbc);
 
+        
+        // BOTÓN RESERVAR (Solo útil si no hay stock)
+        JButton btnReservar = new JButton("⭐ Reservar Libro");
+        if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
+            btnReservar.setBackground(new Color(255, 193, 7));
+            btnReservar.setForeground(Color.BLACK);
+        }
+        gbc.gridy++;
+        pnlOperations.add(btnReservar, gbc);
+
+        btnReservar.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                int libroId = (int) tableModel.getValueAt(row, 0);
+                Reserva r = new Reserva();
+                r.setSocioId(usuarioActual.getId());
+                r.setLibroId(libroId);
+                if (reservaDAO.insertar(r)) {
+                    JOptionPane.showMessageDialog(this, "Reserva realizada con éxito.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Seleccione un libro de la tabla.");
+            }
+        });
+
         // Acción del botón "Buscar en API": llama a Open Library con el ISBN
         btnFetch.addActionListener(e -> {
             OpenLibraryService.BookInfo info = OpenLibraryService.fetchByIsbn(txtLibroIsbn.getText());
@@ -379,17 +405,65 @@ public class Principal extends JFrame {
     private void configModuloPrestamos() {
         String[] cols = { "ID", "Socio", "Libro", "Vence", "Estado" };
         tableModel.setDataVector(null, cols);
-        // Cargar préstamos activos usando un DTO (Data Transfer Object)
         prestamoDAO.listarPrestamosActivos().forEach(p -> tableModel.addRow(new Object[] { p.getId(),
                 p.getNombreSocio(), p.getTituloLibro(), p.getFechaDevolucionPrevista(), p.getEstado() }));
 
-        pnlOperations.setLayout(new GridLayout(10, 1, 5, 5));
+        pnlOperations.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        pnlOperations.add(new JLabel("NUEVO PRÉSTAMO"), gbc);
+        
+        gbc.gridy++;
+        pnlOperations.add(new JLabel("ID Socio:"), gbc);
+        gbc.gridy++;
+        JTextField txtSocioId = new JTextField();
+        pnlOperations.add(txtSocioId, gbc);
+
+        gbc.gridy++;
+        pnlOperations.add(new JLabel("ID Libro:"), gbc);
+        gbc.gridy++;
+        JTextField txtLibroId = new JTextField();
+        pnlOperations.add(txtLibroId, gbc);
+
+        gbc.gridy++;
+        JButton btnPrestar = new JButton("Realizar Préstamo");
+        if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
+            btnPrestar.setBackground(new Color(63, 81, 181));
+            btnPrestar.setForeground(Color.WHITE);
+        }
+        pnlOperations.add(btnPrestar, gbc);
+
+        gbc.gridy++;
+        gbc.insets = new Insets(20, 5, 5, 5);
         JButton btnDevolver = new JButton("Registrar Devolución");
         if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
-            btnDevolver.setBackground(new Color(244, 67, 54)); // Rojo para devoluciones
+            btnDevolver.setBackground(new Color(244, 67, 54));
             btnDevolver.setForeground(Color.WHITE);
         }
-        pnlOperations.add(btnDevolver);
+        pnlOperations.add(btnDevolver, gbc);
+
+        btnPrestar.addActionListener(e -> {
+            try {
+                int sId = Integer.parseInt(txtSocioId.getText());
+                int lId = Integer.parseInt(txtLibroId.getText());
+                Prestamo p = new Prestamo();
+                p.setSocioId(sId);
+                p.setLibroId(lId);
+                p.setFechaDevolucionPrevista(LocalDate.now().plusDays(15));
+                if (prestamoDAO.registrarPrestamo(p)) {
+                    JOptionPane.showMessageDialog(this, "Préstamo realizado");
+                    configModuloPrestamos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error: Sin stock o ID no válido.");
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Introduzca IDs numéricos válidos.");
+            }
+        });
 
         btnDevolver.addActionListener(e -> {
             int row = table.getSelectedRow();
@@ -415,13 +489,42 @@ public class Principal extends JFrame {
     }
 
     /**
-     * Módulo de Reservas: Relación N:M entre Usuarios y Libros
+     * Módulo de Reservas: Muestra todas las reservas (Para el Bibliotecario)
      */
     private void configModuloReservas() {
-        String[] cols = { "ID", "Estado", "Fecha" };
+        String[] cols = { "ID", "Socio", "Libro", "Fecha", "Estado" };
         tableModel.setDataVector(null, cols);
-        pnlOperations.add(new JLabel("Gestión de Reservas"));
-        pnlOperations.add(new JLabel("Base de datos configurada para relaciones N:M."));
+        reservaDAO.listarTodas().forEach(r -> tableModel.addRow(new Object[] { 
+            r.getId(), r.getNombreSocio(), r.getTituloLibro(), r.getFechaReserva(), r.getEstado() 
+        }));
+        
+        pnlOperations.setLayout(new GridLayout(5, 1, 10, 10));
+        pnlOperations.add(new JLabel("GESTIÓN DE RESERVAS", JLabel.CENTER));
+        JButton btnBorrar = new JButton("Eliminar Reserva");
+        btnBorrar.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                int id = (int) tableModel.getValueAt(row, 0);
+                if (reservaDAO.eliminar(id)) {
+                    configModuloReservas();
+                }
+            }
+        });
+        pnlOperations.add(btnBorrar);
+    }
+
+    /**
+     * Módulo de Mis Reservas: Muestra solo las reservas del socio actual
+     */
+    private void configModuloMisReservas() {
+        String[] cols = { "ID", "Libro", "Fecha", "Estado" };
+        tableModel.setDataVector(null, cols);
+        reservaDAO.listarPorSocio(usuarioActual.getId()).forEach(r -> tableModel.addRow(new Object[] { 
+            r.getId(), r.getTituloLibro(), r.getFechaReserva(), r.getEstado() 
+        }));
+        
+        pnlOperations.setLayout(new GridLayout(5, 1, 10, 10));
+        pnlOperations.add(new JLabel("MIS RESERVAS", JLabel.CENTER));
     }
 
     /**
