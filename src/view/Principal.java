@@ -402,8 +402,56 @@ public class Principal extends JFrame {
         // Carga todos los usuarios desde la base de datos
         usuarioDAO.listarTodos().forEach(
                 u -> tableModel.addRow(new Object[] { u.getId(), u.getUsername(), u.getNombre(), u.getRol() }));
-        pnlOperations.add(new JLabel("Módulo de Consulta de Usuarios"));
-        pnlOperations.add(new JLabel("Rol actual: " + usuarioActual.getRol()));
+
+        pnlOperations.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        pnlOperations.add(new JLabel("GESTIÓN DE USUARIOS"), gbc);
+        gbc.gridy++;
+        pnlOperations.add(new JLabel("Seleccione un usuario para gestionarlo."), gbc);
+
+        JButton btnEliminar = new JButton("🗑️ Eliminar Usuario");
+        if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
+            btnEliminar.setBackground(new Color(244, 67, 54));
+            btnEliminar.setForeground(Color.WHITE);
+        }
+        gbc.gridy++;
+        gbc.insets = new Insets(20, 5, 5, 5);
+        pnlOperations.add(btnEliminar, gbc);
+
+        btnEliminar.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                int id = (int) tableModel.getValueAt(row, 0);
+                String username = (String) tableModel.getValueAt(row, 1);
+
+                // Prevención de auto-eliminación
+                if (id == usuarioActual.getId()) {
+                    JOptionPane.showMessageDialog(this, "No puedes eliminar tu propia cuenta.", "Acceso Denegado",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "¿Estás seguro de que deseas eliminar al usuario '" + username + "'?\nEsta acción no se puede deshacer.",
+                        "Confirmar Eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    if (usuarioDAO.eliminar(id)) {
+                        JOptionPane.showMessageDialog(this, "Usuario eliminado correctamente.");
+                        configModuloUsuarios(); // Refresca la tabla
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Error al eliminar el usuario. Puede que tenga registros asociados.");
+                    }
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Por favor, seleccione un usuario de la tabla.");
+            }
+        });
     }
 
     /**
