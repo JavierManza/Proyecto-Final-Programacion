@@ -197,7 +197,7 @@ public class Principal extends JFrame {
     /**
      * Crea el panel lateral izquierdo con los botones de navegación.
      * Los módulos que se muestran dependen del rol del usuario:
-     * - ADMIN: acceso total a Libros, Usuarios, Préstamos, Historial y Reservas.
+     * - BIBLIOTECARIO: acceso total a Libros, Usuarios, Préstamos, Historial y Reservas.
      * - SOCIO: solo puede ver sus propios préstamos y sus reservas.
      */
     private JPanel createSidebar() {
@@ -214,7 +214,7 @@ public class Principal extends JFrame {
         // Añadir una etiqueta de rol en la parte superior del sidebar
         JLabel lblRol = new JLabel(esAdmin() ? "BIBLIOTECARIO" : "SOCIO", JLabel.LEFT);
         lblRol.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblRol.setForeground(esAdmin() ? new Color(255, 193, 7) : new Color(100, 220, 255)); // Amarillo para admin,
+        lblRol.setForeground(esAdmin() ? new Color(255, 193, 7) : new Color(100, 220, 255)); // Amarillo para bibliotecario,
                                                                                              // azul para socio
         lblRol.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 10));
         sidebar.add(lblRol);
@@ -233,7 +233,7 @@ public class Principal extends JFrame {
     }
 
     /**
-     * Devuelve true si el usuario actual tiene rol de ADMIN (Bibliotecario).
+     * Devuelve true si el usuario actual tiene rol de BIBLIOTECARIO.
      */
     private boolean esAdmin() {
         return "BIBLIOTECARIO".equals(usuarioActual.getRol());
@@ -359,36 +359,36 @@ public class Principal extends JFrame {
                     }
                 }
             });
-        } else {
+        } else if ("SOCIO".equals(usuarioActual.getRol())) {
             pnlOperations.add(new JLabel("CATÁLOGO DE LIBROS"), gbc);
             gbc.gridy++;
             pnlOperations.add(new JLabel("Selecciona un libro para reservarlo."), gbc);
-        }
 
-        // BOTÓN RESERVAR (Disponible para todos, pero especialmente útil para socios)
-        JButton btnReservar = new JButton("⭐ Reservar Libro");
-        if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
-            btnReservar.setBackground(new Color(255, 193, 7));
-            btnReservar.setForeground(Color.BLACK);
-        }
-        gbc.gridy++;
-        gbc.insets = new Insets(20, 5, 5, 5);
-        pnlOperations.add(btnReservar, gbc);
-
-        btnReservar.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                int libroId = (int) tableModel.getValueAt(row, 0);
-                Reserva r = new Reserva();
-                r.setSocioId(usuarioActual.getId());
-                r.setLibroId(libroId);
-                if (reservaDAO.insertar(r)) {
-                    JOptionPane.showMessageDialog(this, "Reserva realizada con éxito.");
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Seleccione un libro de la tabla.");
+            // BOTÓN RESERVAR (Solo para socios)
+            JButton btnReservar = new JButton("⭐ Reservar Libro");
+            if (UIManager.getLookAndFeel().getName().contains("FlatLaf")) {
+                btnReservar.setBackground(new Color(255, 193, 7));
+                btnReservar.setForeground(Color.BLACK);
             }
-        });
+            gbc.gridy++;
+            gbc.insets = new Insets(20, 5, 5, 5);
+            pnlOperations.add(btnReservar, gbc);
+
+            btnReservar.addActionListener(e -> {
+                int row = table.getSelectedRow();
+                if (row != -1) {
+                    int libroId = (int) tableModel.getValueAt(row, 0);
+                    Reserva r = new Reserva();
+                    r.setSocioId(usuarioActual.getId());
+                    r.setLibroId(libroId);
+                    if (reservaDAO.insertar(r)) {
+                        JOptionPane.showMessageDialog(this, "Reserva realizada con éxito.");
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "Seleccione un libro de la tabla.");
+                }
+            });
+        }
     }
 
     /**

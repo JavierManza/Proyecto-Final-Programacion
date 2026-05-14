@@ -109,7 +109,7 @@ public class Registro extends JFrame {
         gbc.gridx = 0;
         pnlForm.add(new JLabel("Rol:"), gbc);
         gbc.gridx = 1;
-        cbRol = new JComboBox<>(new String[] { "SOCIO", "ADMIN" });
+        cbRol = new JComboBox<>(new String[] { "SOCIO", "BIBLIOTECARIO" });
         pnlForm.add(cbRol, gbc);
 
         // --- Panel Dinámico con CardLayout ---
@@ -142,7 +142,7 @@ public class Registro extends JFrame {
 
         // Se añaden las dos tarjetas al panel, identificadas por el nombre del rol
         pnlDinamico.add(pnlSocio, "SOCIO");
-        pnlDinamico.add(pnlBiblio, "ADMIN");
+        pnlDinamico.add(pnlBiblio, "BIBLIOTECARIO");
         pnlForm.add(pnlDinamico, gbc);
 
         // Evento: Cambiar tarjeta al cambiar el rol en el JComboBox
