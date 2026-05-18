@@ -78,3 +78,5 @@ INSERT INTO socios (usuario_id, direccion, telefono) VALUES (2, 'Calle Mayor 1',
 INSERT INTO libros (isbn, titulo, autor, ejemplares_totales, ejemplares_disponibles) VALUES 
 ('9788424116293', 'El Quijote', 'Miguel de Cervantes', 5, 5),
 ('9788433920157', 'Cien años de soledad', 'Gabriel García Márquez', 3, 3);
+
+-- INSERT INTO prestamos (socio_id, libro_id, fecha_prestamo, fecha_devolucion_prevista, estado) VALUES (2, 1, '2024-01-01', '2024-01-15', 'ACTIVO');

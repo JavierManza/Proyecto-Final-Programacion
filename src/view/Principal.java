@@ -44,38 +44,38 @@ public class Principal extends JFrame {
      */
     private void initUI() {
         setTitle("Biblioteca Municipal - Dashboard [" + usuarioActual.getNombre() + " | " + usuarioActual.getRol()
-                + "]");
-        setSize(1150, 800);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+                + "]"); // Título con usuario y rol
+        setSize(1150, 800); // Tamaño inicial de la ventana
+        setDefaultCloseOperation(EXIT_ON_CLOSE); // Cierra la app al cerrar ventana
+        setLocationRelativeTo(null); // Centrar en pantalla
+        setLayout(new BorderLayout()); // Layout principal por zonas
 
         // Menú Superior
         setJMenuBar(createMenuBar());
 
         // Sidebar Premium
-        add(createSidebar(), BorderLayout.WEST);
+        add(createSidebar(), BorderLayout.WEST); // Botones de navegación a la izquierda
 
         // Contenido Central
-        pnlContent = new JPanel(new BorderLayout());
+        pnlContent = new JPanel(new BorderLayout()); // Panel central con su propio layout
         tableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return false; // Tabla de solo lectura
             }
         };
-        table = new JTable(tableModel);
-        table.setRowHeight(30);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        pnlContent.add(new JScrollPane(table), BorderLayout.CENTER);
+        table = new JTable(tableModel); // Tabla que mostrará los datos
+        table.setRowHeight(30); // Altura de filas
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Solo una fila seleccionada
+        pnlContent.add(new JScrollPane(table), BorderLayout.CENTER); // Tabla con scroll en el centro
 
         // Panel de Operaciones Adaptativo (Derecha)
         pnlOperations = new JPanel();
-        pnlOperations.setPreferredSize(new Dimension(300, 0));
-        pnlOperations.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
-        pnlContent.add(pnlOperations, BorderLayout.EAST);
+        pnlOperations.setPreferredSize(new Dimension(300, 0)); // Ancho fijo aproximado
+        pnlOperations.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10)); // Espacio interno
+        pnlContent.add(pnlOperations, BorderLayout.EAST); // Panel de controles a la derecha
 
-        add(pnlContent, BorderLayout.CENTER);
+        add(pnlContent, BorderLayout.CENTER); // Añade el panel central a la ventana
     }
 
     /**
@@ -197,7 +197,8 @@ public class Principal extends JFrame {
     /**
      * Crea el panel lateral izquierdo con los botones de navegación.
      * Los módulos que se muestran dependen del rol del usuario:
-     * - BIBLIOTECARIO: acceso total a Libros, Usuarios, Préstamos, Historial y Reservas.
+     * - BIBLIOTECARIO: acceso total a Libros, Usuarios, Préstamos, Historial y
+     * Reservas.
      * - SOCIO: solo puede ver sus propios préstamos y sus reservas.
      */
     private JPanel createSidebar() {
@@ -214,7 +215,8 @@ public class Principal extends JFrame {
         // Añadir una etiqueta de rol en la parte superior del sidebar
         JLabel lblRol = new JLabel(esAdmin() ? "BIBLIOTECARIO" : "SOCIO", JLabel.LEFT);
         lblRol.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblRol.setForeground(esAdmin() ? new Color(255, 193, 7) : new Color(100, 220, 255)); // Amarillo para bibliotecario,
+        lblRol.setForeground(esAdmin() ? new Color(255, 193, 7) : new Color(100, 220, 255)); // Amarillo para
+                                                                                             // bibliotecario,
                                                                                              // azul para socio
         lblRol.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 10));
         sidebar.add(lblRol);
@@ -244,6 +246,8 @@ public class Principal extends JFrame {
      * Los socios solo tienen acceso a sus propios módulos.
      */
     private void switchModulo(String modulo) {
+        // Elimina físicamente todos los componentes visuales (tablas, botones, etc.)
+        // que el módulo anterior había dibujado en este panel. Lo deja en blanco.
         pnlOperations.removeAll();
         switch (modulo) {
             case "Libros" -> configModuloLibros();
@@ -255,7 +259,14 @@ public class Principal extends JFrame {
             case "Mis Préstamos" -> configModuloMisPrestamos();
             case "Mis Reservas" -> configModuloMisReservas();
         }
+        // Notifica al gestor de diseño (Layout) que los componentes
+        // internos han cambiado. Obliga a Java a recalcular tamaños, posiciones y
+        // alineaciones.
         pnlOperations.revalidate();
+
+        // Fuerza al sistema operativo a volver a pintar visualmente
+        // el panel en la pantalla para que el usuario pueda ver los cambios reflejados
+        // de inmediato.
         pnlOperations.repaint();
     }
 
@@ -341,7 +352,7 @@ public class Principal extends JFrame {
                     l.setEjemplaresDisponibles(l.getEjemplaresTotales());
                     if (libroDAO.insertar(l)) {
                         JOptionPane.showMessageDialog(this, "Libro guardado");
-                        configModuloLibros();
+                        configModuloLibros(); // Actualiza la tabla para que aparezca el nuevo libro
                     }
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Error: Verifique los datos numéricos.");
@@ -350,7 +361,7 @@ public class Principal extends JFrame {
 
             // Acción del botón "Eliminar"
             btnEliminar.addActionListener(e -> {
-                int row = table.getSelectedRow();
+                int row = table.getSelectedRow(); // Obtiene la fila seleccionada en la tabla
                 if (row != -1) {
                     int id = (int) tableModel.getValueAt(row, 0);
                     if (libroDAO.eliminar(id)) {
@@ -437,7 +448,8 @@ public class Principal extends JFrame {
                 }
 
                 int confirm = JOptionPane.showConfirmDialog(this,
-                        "¿Estás seguro de que deseas eliminar al usuario '" + username + "'?\nEsta acción no se puede deshacer.",
+                        "¿Estás seguro de que deseas eliminar al usuario '" + username
+                                + "'?\nEsta acción no se puede deshacer.",
                         "Confirmar Eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (confirm == JOptionPane.YES_OPTION) {
@@ -445,7 +457,8 @@ public class Principal extends JFrame {
                         JOptionPane.showMessageDialog(this, "Usuario eliminado correctamente.");
                         configModuloUsuarios(); // Refresca la tabla
                     } else {
-                        JOptionPane.showMessageDialog(this, "Error al eliminar el usuario. Puede que tenga registros asociados.");
+                        JOptionPane.showMessageDialog(this,
+                                "Error al eliminar el usuario. Puede que tenga registros asociados.");
                     }
                 }
             } else {
@@ -549,10 +562,10 @@ public class Principal extends JFrame {
     private void configModuloReservas() {
         String[] cols = { "ID", "Socio", "Libro", "Fecha", "Estado" };
         tableModel.setDataVector(null, cols);
-        reservaDAO.listarTodas().forEach(r -> tableModel.addRow(new Object[] { 
-            r.getId(), r.getNombreSocio(), r.getTituloLibro(), r.getFechaReserva(), r.getEstado() 
+        reservaDAO.listarTodas().forEach(r -> tableModel.addRow(new Object[] {
+                r.getId(), r.getNombreSocio(), r.getTituloLibro(), r.getFechaReserva(), r.getEstado()
         }));
-        
+
         pnlOperations.setLayout(new GridLayout(6, 1, 10, 10));
         pnlOperations.add(new JLabel("GESTIÓN DE RESERVAS", JLabel.CENTER));
 
@@ -565,21 +578,26 @@ public class Principal extends JFrame {
             int row = table.getSelectedRow();
             if (row != -1) {
                 int resId = (int) tableModel.getValueAt(row, 0);
+                // Toma todas las reservas y crea un Stream para poder filtrarlas
                 reservaDAO.listarTodas().stream()
-                    .filter(res -> res.getId() == resId)
-                    .findFirst().ifPresent(res -> {
-                        Prestamo p = new Prestamo();
-                        p.setSocioId(res.getSocioId());
-                        p.setLibroId(res.getLibroId());
-                        p.setFechaDevolucionPrevista(LocalDate.now().plusDays(15));
-                        if (prestamoDAO.registrarPrestamo(p)) {
-                            reservaDAO.actualizarEstado(resId, "COMPLETADA");
-                            JOptionPane.showMessageDialog(this, "Libro entregado. La reserva ahora está COMPLETADA.");
-                            configModuloReservas();
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Error: Verifique el stock del libro.");
-                        }
-                    });
+                        // Solo deja la reserva cuyo ID coincide con la fila seleccionada
+                        .filter(res -> res.getId() == resId)
+                        // Busca el primer elemento que cumpla la condición
+                        .findFirst().ifPresent(res -> {
+                            // Si existe, crea un préstamo con los datos de esa reserva
+                            Prestamo p = new Prestamo();
+                            p.setSocioId(res.getSocioId());
+                            p.setLibroId(res.getLibroId());
+                            p.setFechaDevolucionPrevista(LocalDate.now().plusDays(15));
+                            if (prestamoDAO.registrarPrestamo(p)) {
+                                reservaDAO.actualizarEstado(resId, "COMPLETADA");
+                                JOptionPane.showMessageDialog(this,
+                                        "Libro entregado. La reserva ahora está COMPLETADA.");
+                                configModuloReservas();
+                            } else {
+                                JOptionPane.showMessageDialog(this, "Error: Verifique el stock del libro.");
+                            }
+                        });
             }
         });
         pnlOperations.add(btnConfirmar);
